@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using GitStat.Core.Contracts;
+using GitStat.Core.Entities;
 using GitStat.Persistence;
+using ConsoleTableExt;
 
 namespace GitStat.ImportConsole
 {
@@ -39,8 +42,71 @@ namespace GitStat.ImportConsole
             }
             Console.WriteLine("Datenbankabfragen");
             Console.WriteLine("=================");
+
             using (IUnitOfWork unitOfWork = new UnitOfWork())
             {
+                List<Commit> commitsOf2019 = unitOfWork.CommitRepository.GetCommitsOf2019().ToList();
+
+                Console.WriteLine("Commits von 2019!");
+                Console.WriteLine();
+
+                ConsoleTableBuilder.From(commitsOf2019
+                    .Select(o => new object[]
+                    {
+                        o.Developer.Name,
+                        o.Date,
+                        o.FilesChanges,
+                        o.Insertions,
+                        o.Deletions
+                    })
+                    .ToList())
+                    .WithColumn(
+                        "Name",
+                        "Date",
+                        "FileChanges",
+                        "Insertions",
+                        "Deletions"
+                    )
+                    .WithFormat(ConsoleTableBuilderFormat.Minimal)
+                    .WithOptions(new ConsoleTableBuilderOption { DividerString = "" })
+                    .ExportAndWrite();
+
+                Console.WriteLine();
+                Console.WriteLine("____________________________________________");
+                Console.WriteLine();
+
+                Commit commit = unitOfWork.CommitRepository.GetCommitByID(4);
+                Console.WriteLine("Commit mit ID 4");
+                Console.WriteLine();
+                Console.WriteLine(commit.ToString());
+                Console.WriteLine();
+
+                List<Developer> devops = unitOfWork.DeveloperRepository.GetDevopsAndCommits().OrderBy(d => d.Commits.Count()).ToList();
+
+                Console.WriteLine("Statistik der Developer");
+                Console.WriteLine("____________________________________________");
+
+                ConsoleTableBuilder.From(devops
+                    .Select(o => new object[]
+                    {
+                        o.Name,
+                        o.Commits.Count(),
+                        o.Commits.Select(c => c.FilesChanges).Sum(),
+                        o.Commits.Select(c => c.Insertions).Sum(),
+                        o.Commits.Select(c => c.Deletions).Sum()
+                    })
+                    .ToList())
+                    .WithColumn(
+                        "Name",
+                        "FileChanges",
+                        "Insertions",
+                        "Deletions"
+                    )
+                    .WithFormat(ConsoleTableBuilderFormat.Minimal)
+                    .WithOptions(new ConsoleTableBuilderOption { DividerString = "" })
+                    .ExportAndWrite();
+
+                Console.WriteLine();
             }
             Console.Write("Beenden mit Eingabetaste ...");
             Console.ReadLine();

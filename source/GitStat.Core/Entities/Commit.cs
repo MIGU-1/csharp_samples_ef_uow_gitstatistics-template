@@ -20,5 +20,9 @@ namespace GitStat.Core.Entities
         public int Insertions { get; set; }
         public int Deletions { get; set; }
 
+        public override string ToString()
+        {
+            return $"{Developer.Name}\t{Date}\t{FilesChanges}\t{Insertions}\t{Deletions}";
+        }
     }
 }
